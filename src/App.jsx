@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Heart, Scissors, Sparkles, RotateCcw } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Heart, Scissors, Sparkles, RotateCcw } from 'lucide-react';
 
 const App = () => {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [gameStatus, setGameStatus] = useState("playing");
-  const [promoCode, setPromoCode] = useState("");
+  const [gameStatus, setGameStatus] = useState('playing');
+  const [promoCode, setPromoCode] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [winLine, setWinLine] = useState([]);
   const [stats, setStats] = useState({ wins: 0, losses: 0, draws: 0 });
@@ -13,40 +13,38 @@ const App = () => {
   const [showCopyNotification, setShowCopyNotification] = useState(false);
 
   // Чтение переменных окружения из .env файла
-  const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
-  const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
   useEffect(() => {
-    const saved = localStorage.getItem("gameStats");
+    const saved = localStorage.getItem('gameStats');
     if (saved) setStats(JSON.parse(saved));
   }, []);
 
-  const NOTIFY_URL = import.meta.env.VITE_NOTIFY_URL;
+  const sendToTelegram = async (message) => {
+    try {
+      const resp = await fetch('/api/telegram', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: message }),
+      });
 
-const sendToTelegram = async (message) => {
-  const tg = window.Telegram?.WebApp;
-  const initData = tg?.initData;
+      const data = await resp.json().catch(() => ({}));
 
-  if (!initData) return; // не в Telegram
+      if (!resp.ok || !data?.ok) {
+        console.error('❌ Ошибка отправки через Cloudflare Function:', data);
+        return false;
+      }
 
-  try {
-    await fetch(NOTIFY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initData, message }),
-    });
-  } catch (e) {
-    console.error("Notify error:", e);
-  }
-};
-
-useEffect(() => {
-  window.Telegram?.WebApp?.ready?.();
-}, []);
+      console.log('✅ Telegram: сообщение отправлено!');
+      return true;
+    } catch (error) {
+      console.error('❌ Сетевая ошибка при отправке в Telegram:', error);
+      return false;
+    }
+  };
 
   const generatePromoCode = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
     for (let i = 0; i < 5; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -55,23 +53,14 @@ useEffect(() => {
 
   const checkWinner = (squares) => {
     const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
     ];
 
     for (let line of lines) {
       const [a, b, c] = line;
-      if (
-        squares[a] &&
-        squares[a] === squares[b] &&
-        squares[a] === squares[c]
-      ) {
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
         return { winner: squares[a], line };
       }
     }
@@ -81,35 +70,35 @@ useEffect(() => {
   const handleWin = () => {
     const promo = generatePromoCode();
     setPromoCode(promo);
-    setGameStatus("won");
+    setGameStatus('won');
     setShowModal(true);
     setShowConfetti(true);
     sendToTelegram(`🎉 Победа! Промокод выдан: ${promo}`);
-
+    
     const newStats = { ...stats, wins: stats.wins + 1 };
     setStats(newStats);
-    localStorage.setItem("gameStats", JSON.stringify(newStats));
+    localStorage.setItem('gameStats', JSON.stringify(newStats));
 
     setTimeout(() => setShowConfetti(false), 3000);
   };
 
   const handleLoss = () => {
-    setGameStatus("lost");
+    setGameStatus('lost');
     setShowModal(true);
-    sendToTelegram("😔 Проигрыш");
-
+    sendToTelegram('😔 Проигрыш');
+    
     const newStats = { ...stats, losses: stats.losses + 1 };
     setStats(newStats);
-    localStorage.setItem("gameStats", JSON.stringify(newStats));
+    localStorage.setItem('gameStats', JSON.stringify(newStats));
   };
 
   const handleDraw = () => {
-    setGameStatus("draw");
+    setGameStatus('draw');
     setShowModal(true);
-
+    
     const newStats = { ...stats, draws: stats.draws + 1 };
     setStats(newStats);
-    localStorage.setItem("gameStats", JSON.stringify(newStats));
+    localStorage.setItem('gameStats', JSON.stringify(newStats));
   };
 
   const makeComputerMove = (currentBoard) => {
@@ -120,38 +109,21 @@ useEffect(() => {
     if (emptyCells.length === 0) return;
 
     const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
     ];
 
     // Попытка выиграть
     for (let line of lines) {
       const [a, b, c] = line;
-      if (
-        currentBoard[a] === "scissors" &&
-        currentBoard[b] === "scissors" &&
-        !currentBoard[c]
-      ) {
+      if (currentBoard[a] === 'scissors' && currentBoard[b] === 'scissors' && !currentBoard[c]) {
         return c;
       }
-      if (
-        currentBoard[a] === "scissors" &&
-        currentBoard[c] === "scissors" &&
-        !currentBoard[b]
-      ) {
+      if (currentBoard[a] === 'scissors' && currentBoard[c] === 'scissors' && !currentBoard[b]) {
         return b;
       }
-      if (
-        currentBoard[b] === "scissors" &&
-        currentBoard[c] === "scissors" &&
-        !currentBoard[a]
-      ) {
+      if (currentBoard[b] === 'scissors' && currentBoard[c] === 'scissors' && !currentBoard[a]) {
         return a;
       }
     }
@@ -159,25 +131,13 @@ useEffect(() => {
     // Блокировка игрока
     for (let line of lines) {
       const [a, b, c] = line;
-      if (
-        currentBoard[a] === "heart" &&
-        currentBoard[b] === "heart" &&
-        !currentBoard[c]
-      ) {
+      if (currentBoard[a] === 'heart' && currentBoard[b] === 'heart' && !currentBoard[c]) {
         return c;
       }
-      if (
-        currentBoard[a] === "heart" &&
-        currentBoard[c] === "heart" &&
-        !currentBoard[b]
-      ) {
+      if (currentBoard[a] === 'heart' && currentBoard[c] === 'heart' && !currentBoard[b]) {
         return b;
       }
-      if (
-        currentBoard[b] === "heart" &&
-        currentBoard[c] === "heart" &&
-        !currentBoard[a]
-      ) {
+      if (currentBoard[b] === 'heart' && currentBoard[c] === 'heart' && !currentBoard[a]) {
         return a;
       }
     }
@@ -187,14 +147,14 @@ useEffect(() => {
   };
 
   const handleCellClick = (index) => {
-    if (board[index] || !isPlayerTurn || gameStatus !== "playing") return;
+    if (board[index] || !isPlayerTurn || gameStatus !== 'playing') return;
 
     const newBoard = [...board];
-    newBoard[index] = "heart";
+    newBoard[index] = 'heart';
     setBoard(newBoard);
 
     const result = checkWinner(newBoard);
-    if (result && result.winner === "heart") {
+    if (result && result.winner === 'heart') {
       setWinLine(result.line);
       setTimeout(() => handleWin(), 500);
       return;
@@ -209,11 +169,11 @@ useEffect(() => {
     setTimeout(() => {
       const computerMove = makeComputerMove(newBoard);
       if (computerMove !== undefined) {
-        newBoard[computerMove] = "scissors";
+        newBoard[computerMove] = 'scissors';
         setBoard(newBoard);
 
         const computerResult = checkWinner(newBoard);
-        if (computerResult && computerResult.winner === "scissors") {
+        if (computerResult && computerResult.winner === 'scissors') {
           setWinLine(computerResult.line);
           setTimeout(() => handleLoss(), 500);
           return;
@@ -232,7 +192,7 @@ useEffect(() => {
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setIsPlayerTurn(true);
-    setGameStatus("playing");
+    setGameStatus('playing');
     setShowModal(false);
     setWinLine([]);
   };
@@ -247,12 +207,10 @@ useEffect(() => {
     <div className="min-h-screen bg-gradient-to-br from-pink-100 via-rose-100 to-amber-100 flex items-center justify-center p-4">
       {/* Уведомление о копировании */}
       {showCopyNotification && (
-        <div className="fixed top-4 inset-x-4 z-50 animate-[scale-in_0.3s_ease-out] sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2">
-          <div className="bg-gradient-to-r from-emerald-400 to-green-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-center gap-3">
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 animate-[scale-in_0.3s_ease-out]">
+          <div className="bg-gradient-to-r from-emerald-400 to-green-500 text-white px-8 py-4 rounded-full shadow-2xl flex items-center gap-3">
             <div className="text-2xl">✅</div>
-            <span className="font-medium text-base sm:text-lg">
-              Промокод скопирован!
-            </span>
+            <span className="font-medium text-lg">Промокод скопирован!</span>
           </div>
         </div>
       )}
@@ -267,7 +225,7 @@ useEffect(() => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${1 + Math.random() * 2}s`,
+                animationDuration: `${1 + Math.random() * 2}s`
               }}
             >
               <Sparkles className="text-pink-400" size={20} />
@@ -287,21 +245,15 @@ useEffect(() => {
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 mb-6">
           <div className="flex justify-around mb-6 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-500">
-                {stats.wins}
-              </div>
+              <div className="text-2xl font-bold text-emerald-500">{stats.wins}</div>
               <div className="text-gray-600">Победы</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-rose-500">
-                {stats.losses}
-              </div>
+              <div className="text-2xl font-bold text-rose-500">{stats.losses}</div>
               <div className="text-gray-600">Поражения</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-amber-500">
-                {stats.draws}
-              </div>
+              <div className="text-2xl font-bold text-amber-500">{stats.draws}</div>
               <div className="text-gray-600">Ничьи</div>
             </div>
           </div>
@@ -311,37 +263,18 @@ useEffect(() => {
               <button
                 key={index}
                 onClick={() => handleCellClick(index)}
-                disabled={!isPlayerTurn || gameStatus !== "playing"}
+                disabled={!isPlayerTurn || gameStatus !== 'playing'}
                 className={`aspect-square bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl shadow-lg 
                   flex items-center justify-center transition-all duration-300 hover:scale-105 
-                  ${
-                    winLine.includes(index)
-                      ? "ring-4 ring-amber-400 bg-amber-100"
-                      : ""
-                  }
-                  ${
-                    !cell && isPlayerTurn && gameStatus === "playing"
-                      ? "hover:shadow-xl cursor-pointer"
-                      : ""
-                  }
-                  ${
-                    !isPlayerTurn || gameStatus !== "playing"
-                      ? "cursor-not-allowed opacity-70"
-                      : ""
-                  }`}
+                  ${winLine.includes(index) ? 'ring-4 ring-amber-400 bg-amber-100' : ''}
+                  ${!cell && isPlayerTurn && gameStatus === 'playing' ? 'hover:shadow-xl cursor-pointer' : ''}
+                  ${!isPlayerTurn || gameStatus !== 'playing' ? 'cursor-not-allowed opacity-70' : ''}`}
               >
-                {cell === "heart" && (
-                  <Heart
-                    className="text-rose-500 animate-[scale-in_0.3s_ease-out]"
-                    size={48}
-                    fill="currentColor"
-                  />
+                {cell === 'heart' && (
+                  <Heart className="text-rose-500 animate-[scale-in_0.3s_ease-out]" size={48} fill="currentColor" />
                 )}
-                {cell === "scissors" && (
-                  <Scissors
-                    className="text-indigo-500 animate-[scale-in_0.3s_ease-out]"
-                    size={48}
-                  />
+                {cell === 'scissors' && (
+                  <Scissors className="text-indigo-500 animate-[scale-in_0.3s_ease-out]" size={48} />
                 )}
               </button>
             ))}
@@ -349,21 +282,15 @@ useEffect(() => {
 
           <div className="text-center mb-4">
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-rose-100 px-6 py-3 rounded-full">
-              {isPlayerTurn && gameStatus === "playing" ? (
+              {isPlayerTurn && gameStatus === 'playing' ? (
                 <>
-                  <Heart
-                    className="text-rose-500"
-                    size={20}
-                    fill="currentColor"
-                  />
+                  <Heart className="text-rose-500" size={20} fill="currentColor" />
                   <span className="text-gray-700 font-medium">Ваш ход</span>
                 </>
-              ) : gameStatus === "playing" ? (
+              ) : gameStatus === 'playing' ? (
                 <>
                   <Scissors className="text-indigo-500" size={20} />
-                  <span className="text-gray-700 font-medium">
-                    Ход компьютера...
-                  </span>
+                  <span className="text-gray-700 font-medium">Ход компьютера...</span>
                 </>
               ) : (
                 <span className="text-gray-700 font-medium">Игра окончена</span>
@@ -384,8 +311,7 @@ useEffect(() => {
         <div className="text-center text-sm text-gray-600">
           <div className="flex items-center justify-center gap-4">
             <span className="flex items-center gap-1">
-              <Heart className="text-rose-500" size={16} fill="currentColor" />{" "}
-              Вы
+              <Heart className="text-rose-500" size={16} fill="currentColor" /> Вы
             </span>
             <span className="flex items-center gap-1">
               <Scissors className="text-indigo-500" size={16} /> Компьютер
@@ -397,19 +323,15 @@ useEffect(() => {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-40">
           <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-[scale-in_0.3s_ease-out]">
-            {gameStatus === "won" && (
+            {gameStatus === 'won' && (
               <>
                 <div className="text-center mb-6">
                   <div className="text-6xl mb-4">🎉</div>
-                  <h2 className="text-3xl font-bold text-rose-600 mb-2">
-                    Поздравляем!
-                  </h2>
+                  <h2 className="text-3xl font-bold text-rose-600 mb-2">Поздравляем!</h2>
                   <p className="text-gray-600">Вы выиграли!</p>
                 </div>
                 <div className="bg-gradient-to-r from-amber-100 to-yellow-100 rounded-2xl p-6 mb-6">
-                  <p className="text-sm text-gray-600 mb-2 text-center">
-                    Ваш промокод на скидку:
-                  </p>
+                  <p className="text-sm text-gray-600 mb-2 text-center">Ваш промокод на скидку:</p>
                   <div className="text-3xl font-bold text-center text-amber-700 mb-3 tracking-wider">
                     {promoCode}
                   </div>
@@ -424,27 +346,21 @@ useEffect(() => {
               </>
             )}
 
-            {gameStatus === "lost" && (
+            {gameStatus === 'lost' && (
               <>
                 <div className="text-center mb-6">
                   <div className="text-6xl mb-4">💪</div>
-                  <h2 className="text-2xl font-bold text-gray-700 mb-2">
-                    Почти получилось!
-                  </h2>
-                  <p className="text-gray-600">
-                    Не сдавайтесь, попробуйте ещё раз!
-                  </p>
+                  <h2 className="text-2xl font-bold text-gray-700 mb-2">Почти получилось!</h2>
+                  <p className="text-gray-600">Не сдавайтесь, попробуйте ещё раз!</p>
                 </div>
               </>
             )}
 
-            {gameStatus === "draw" && (
+            {gameStatus === 'draw' && (
               <>
                 <div className="text-center mb-6">
                   <div className="text-6xl mb-4">🤝</div>
-                  <h2 className="text-2xl font-bold text-gray-700 mb-2">
-                    Ничья!
-                  </h2>
+                  <h2 className="text-2xl font-bold text-gray-700 mb-2">Ничья!</h2>
                   <p className="text-gray-600">Отличная партия!</p>
                 </div>
               </>
