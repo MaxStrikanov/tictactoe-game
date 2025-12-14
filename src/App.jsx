@@ -21,27 +21,28 @@ const App = () => {
     if (saved) setStats(JSON.parse(saved));
   }, []);
 
-  const sendToTelegram = async (message) => {
-    const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    if (!tgId) return;
+  const NOTIFY_URL = import.meta.env.VITE_NOTIFY_URL;
 
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    await fetch(url, {
+const sendToTelegram = async (message) => {
+  const tg = window.Telegram?.WebApp;
+  const initData = tg?.initData;
+
+  if (!initData) return; // не в Telegram
+
+  try {
+    await fetch(NOTIFY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: tgId, text: message }),
+      body: JSON.stringify({ initData, message }),
     });
+  } catch (e) {
+    console.error("Notify error:", e);
+  }
+};
 
-    // копия админу
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: `User ${tgId}:\n${message}`,
-      }),
-    });
-  };
+useEffect(() => {
+  window.Telegram?.WebApp?.ready?.();
+}, []);
 
   const generatePromoCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
