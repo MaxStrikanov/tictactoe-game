@@ -12,7 +12,12 @@ const App = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [showCopyNotification, setShowCopyNotification] = useState(false);
 
-  // Чтение переменных окружения из .env файла
+  const tgDebug = {
+    hasTelegram: Boolean(window?.Telegram),
+    hasWebApp: Boolean(window?.Telegram?.WebApp),
+    initDataLen: window?.Telegram?.WebApp?.initData?.length || 0,
+    user: window?.Telegram?.WebApp?.initDataUnsafe?.user || null,
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('gameStats');
@@ -208,6 +213,12 @@ async function sendToTelegram(text) {
             <span className="font-medium text-lg">Промокод скопирован!</span>
           </div>
         </div>
+      )}
+
+      {window?.Telegram && (
+        <pre className="fixed bottom-2 left-2 z-50 max-w-[90%] bg-black/80 text-green-400 text-xs p-3 rounded-xl overflow-auto">
+          {JSON.stringify(tgDebug, null, 2)}
+        </pre>
       )}
 
       {showConfetti && (
