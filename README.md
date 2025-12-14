@@ -1,3 +1,29 @@
+## Быстрый старт
+
+1) Установи зависимости:
+```bash
+npm i
+```
+
+2) Создай `.env.local` на основе примера:
+```bash
+cp .env.example .env.local
+```
+Заполни `VITE_TELEGRAM_BOT_TOKEN` и `VITE_TELEGRAM_CHAT_ID`.
+
+3) Запуск в dev:
+```bash
+npm run dev
+```
+
+4) Сборка:
+```bash
+npm run build
+npm run preview
+```
+
+Важно: токен бота в варианте "только фронт" будет попадать в сборку. Это удобно для тестов, но небезопасно для публичного запуска.
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
