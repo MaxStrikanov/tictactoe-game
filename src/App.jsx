@@ -19,28 +19,23 @@ const App = () => {
     if (saved) setStats(JSON.parse(saved));
   }, []);
 
-  const sendToTelegram = async (message) => {
-    try {
-      const resp = await fetch('/api/telegram', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: message }),
-      });
+  function getTelegramInitData() {
+  return window?.Telegram?.WebApp?.initData || "";
+}
 
-      const data = await resp.json().catch(() => ({}));
+async function sendToTelegram(text) {
+  const initData = getTelegramInitData();
 
-      if (!resp.ok || !data?.ok) {
-        console.error('❌ Ошибка отправки через Cloudflare Function:', data);
-        return false;
-      }
+  const resp = await fetch("/api/telegram", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text, initData }),
+  });
 
-      console.log('✅ Telegram: сообщение отправлено!');
-      return true;
-    } catch (error) {
-      console.error('❌ Сетевая ошибка при отправке в Telegram:', error);
-      return false;
-    }
-  };
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || !data.ok) throw new Error("Telegram send failed");
+  return data;
+}
 
   const generatePromoCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
